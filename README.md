@@ -1,4 +1,4 @@
-# A ~~fake~~ simple display manager
+# A simple display manager
 ![image](https://github.com/thiagolopes/dialog_xsessions/assets/5994972/e95da4a2-ee9d-4351-86e9-1360cb2344b3)
 
 ## About
