@@ -44,7 +44,7 @@ class DialogMenu:
 
     def __init__(self, title, header, width, height, lines=0):
         if not shutil.which(self.DIALOG_CMD):
-            raise FileNotFoundError(f"{self.DIALOG_CMD=} not found", file=sys.stderr)
+            raise FileNotFoundError(f"{self.DIALOG_CMD=} not found")
         self.cmd = f"{self.DIALOG_CMD};--title;{title};--menu;{header};{height};{width};{lines}".split(";")
 
     def enumarate_options(self, options):
