@@ -18,5 +18,7 @@ fi
 - dialog (optional)
 
 References:
+
 [What is a Display Manager?](https://freedesktop.org/wiki/Software/LightDM/Design/)
+
 [tbsm](https://loh-tar.github.io/tbsm/)

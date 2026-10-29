@@ -36,6 +36,7 @@ XORG_CMD_FMT = "XDG_SESSION_TYPE=x11 startx {cmd} -- @Xdisplay@ -nolisten tcp"
 WAYLAND_PATH = "/usr/share/wayland-sessions"
 WAYLAND_CMD_FMT = "XDG_SESSION_TYPE=wayland {cmd}"
 
+
 class DialogMenu:
     """
     A class for creating and displaying a dialog menu using the 'dialog' command-line tool.
@@ -65,7 +66,7 @@ class DialogMenu:
         return resp
 
 
-class TextDialog:
+class TextMenu:
     def __init__(self, title, header):
         self.title = title
         self.header = header
@@ -89,9 +90,10 @@ class TextDialog:
                 break
             except ValueError:
                 print("Only numbers")
-            except IndexError as err:
+            except IndexError:
                 print(f"{choice} is not valid option, only 0 - {len(options) - 1}")
         return choice
+
 
 class DesktopParser:
     cp = configparser.ConfigParser()
@@ -102,6 +104,7 @@ class DesktopParser:
         executable_name = self.cp["Desktop Entry"]["Exec"]
         return humable_name, shutil.which(executable_name) or executable_name
 
+
 if __name__ == "__main__":
     x11_sessions_files = [f"{X11_PATH}/{f}" for f in os.listdir(X11_PATH)]
     wayland_files = [f"{WAYLAND_PATH}/{f}" for f in os.listdir(WAYLAND_PATH)]
@@ -111,10 +114,10 @@ if __name__ == "__main__":
     dp = DesktopParser()
     for x11_file in x11_sessions_files:
         x11_humable_name, x11_executable = dp.read(x11_file)
-        all_sessions[x11_humable_name] = XORG_CMD_FMT.format(cmd = x11_executable)
+        all_sessions[x11_humable_name] = XORG_CMD_FMT.format(cmd=x11_executable)
     for way_file in wayland_files:
         way_humable_name, way_executable = dp.read(way_file)
-        all_sessions[way_humable_name] = WAYLAND_CMD_FMT.format(cmd = way_executable)
+        all_sessions[way_humable_name] = WAYLAND_CMD_FMT.format(cmd=way_executable)
 
     sessions_entries = OrderedDict(sorted(all_sessions.items(), key=lambda k: str.casefold(k[0])))
     sessions_names = list(sessions_entries.keys())
@@ -123,8 +126,8 @@ if __name__ == "__main__":
         menu = DialogMenu("FSDM", "Select the desktop:", 60, 10)
         index_result = menu.ask(sessions_names)
     except FileNotFoundError:
-        menu = TextDialog("FSDM", "Select the desktop:")
+        menu = TextMenu("FSDM", "Select the desktop:")
         index_result = menu.ask(sessions_names)
 
     cmd_result = sessions_entries[sessions_names[index_result]]
-    print(cmd_result, flush=True) # stdout
+    print(cmd_result, flush=True)  # stdout
