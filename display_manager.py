@@ -30,23 +30,25 @@ import sys
 import tempfile
 from collections import OrderedDict
 
-XSESSIONS_PATH = "/usr/share/xsessions"
-WAYLAND_SESSIONS_PATH = "/usr/share/wayland-sessions"
-DIALOG_CMD = "dialog"
-SPC = " "
-WAYLAND_SETUP = "XDG_SESSION_TYPE=wayland dbus-run-session" + SPC
-XORG_SETUP = "XDG_SESSION_TYPE=x11 startx" + SPC
+X11_PATH = "/usr/share/xsessions"
+XORG_CMD_FMT = "XDG_SESSION_TYPE=x11 startx {cmd} -- @Xdisplay@ -nolisten tcp"
 
+WAYLAND_PATH = "/usr/share/wayland-sessions"
+WAYLAND_CMD_FMT = "XDG_SESSION_TYPE=wayland {cmd}"
 
 class DialogMenu:
     """
     A class for creating and displaying a dialog menu using the 'dialog' command-line tool.
     """
+    DIALOG_CMD = "dialog"
+
     def __init__(self, title, header, width, height, lines=0):
-        self.cmd = f"{DIALOG_CMD};--title;{title};--menu;{header};{height};{width};{lines}".split(";")
+        if not shutil.which(self.DIALOG_CMD):
+            raise FileNotFoundError(f"{self.DIALOG_CMD=} not found", file=sys.stderr)
+        self.cmd = f"{self.DIALOG_CMD};--title;{title};--menu;{header};{height};{width};{lines}".split(";")
 
     def enumarate_options(self, options):
-        return [str(item) for sublist in enumerate(options) for item in sublist]
+        return [str(item) for n, i in enumerate(options) for item in (n, i)]
 
     def ask(self, options):
         temp_output = tempfile.TemporaryFile()
@@ -60,7 +62,7 @@ class DialogMenu:
         temp_output.seek(0)
         resp = int(temp_output.read())
         temp_output.close()
-        return options[resp]
+        return resp
 
 class DesktopParser:
     cp = configparser.ConfigParser()
@@ -68,34 +70,27 @@ class DesktopParser:
     def read(self, file_path):
         self.cp.read(file_path)
         humable_name = self.cp["Desktop Entry"]["Name"]
-        executable = self.cp["Desktop Entry"]["Exec"]
-        executable = self.get_absolute_path(executable) or executable
-        return humable_name, executable
-
-    def get_absolute_path(self, binary):
-        path = shutil.which(binary)
-        if not path:
-            return None
-        return path
+        executable_name = self.cp["Desktop Entry"]["Exec"]
+        return humable_name, shutil.which(executable_name) or executable_name
 
 if __name__ == "__main__":
+    x11_sessions_files = [f"{X11_PATH}/{f}" for f in os.listdir(X11_PATH)]
+    wayland_files = [f"{WAYLAND_PATH}/{f}" for f in os.listdir(WAYLAND_PATH)]
+
+    sessions = {}
     dp = DesktopParser()
-    if not dp.get_absolute_path(DIALOG_CMD):
-        print(f"{DIALOG_CMD=} not found", file=sys.stderr)
-        sys.exit(1)
+    for x11_file in x11_sessions_files:
+        x11_humable_name, x11_executable = dp.read(x11_file)
+        sessions[x11_humable_name] = XORG_CMD_FMT.format(cmd = x11_executable)
+    for way_file in wayland_files:
+        way_humable_name, way_executable = dp.read(way_file)
+        sessions[way_humable_name] = WAYLAND_CMD_FMT.format(cmd = way_executable)
 
-    menu = DialogMenu("Menu", "Select the desktop:", 60, 10)
-    x_sessions_files = [f"{XSESSIONS_PATH}/{f}" for f in os.listdir(XSESSIONS_PATH)]
-    wayland_files = [f"{WAYLAND_SESSIONS_PATH}/{f}" for f in os.listdir(WAYLAND_SESSIONS_PATH)]
-    sessions_available = OrderedDict()
+    sessions_available = OrderedDict(sorted(sessions.items(), key=lambda k: str.casefold(k[0])))
 
-    for xfile in x_sessions_files:
-        xhumable_name, xexecutable = dp.read(xfile)
-        sessions_available[xhumable_name] = XORG_SETUP + xexecutable
-    for wfile in wayland_files:
-        whumable_name, wexecutable = dp.read(wfile)
-        sessions_available[whumable_name] = WAYLAND_SETUP + wexecutable
+    menu = DialogMenu("FSDM", "Select the desktop:", 60, 10)
+    sessions = list(sessions_available.keys())
+    index_result = menu.ask(sessions)
+    cmd_result = sessions_available[sessions[index_result]]
 
-    menu_result = menu.ask(list(sessions_available.keys()))
-    choice = sessions_available[menu_result]
-    print(choice, flush=True) # stdout
+    print(cmd_result, flush=True) # stdout
