@@ -64,6 +64,35 @@ class DialogMenu:
         temp_output.close()
         return resp
 
+
+class TextDialog:
+    def __init__(self, title, header):
+        self.title = title
+        self.header = header
+
+    def ask(self, options):
+        s = 36
+        b = "\033[1m{}\033[0m"
+        print("-" * s)
+        print(self.title)
+        print("-" * s)
+        for i, option in enumerate(options):
+            print(b.format(i), "\t", option)
+        print("-" * s)
+        while True:
+            choice = input(b.format("Choice: "))
+            try:
+                # validate if choice is int, if not will raise ValueError
+                choice = int(choice)
+                # validate if choice has entry, if not will raise IndexError
+                options[choice]
+                break
+            except ValueError:
+                print("Only numbers")
+            except IndexError as err:
+                print(f"{choice} is not valid option, only 0 - {len(options) - 1}")
+        return choice
+
 class DesktopParser:
     cp = configparser.ConfigParser()
 
@@ -76,21 +105,26 @@ class DesktopParser:
 if __name__ == "__main__":
     x11_sessions_files = [f"{X11_PATH}/{f}" for f in os.listdir(X11_PATH)]
     wayland_files = [f"{WAYLAND_PATH}/{f}" for f in os.listdir(WAYLAND_PATH)]
+    # TODO exit is no desktop found
 
-    sessions = {}
+    all_sessions = {}
     dp = DesktopParser()
     for x11_file in x11_sessions_files:
         x11_humable_name, x11_executable = dp.read(x11_file)
-        sessions[x11_humable_name] = XORG_CMD_FMT.format(cmd = x11_executable)
+        all_sessions[x11_humable_name] = XORG_CMD_FMT.format(cmd = x11_executable)
     for way_file in wayland_files:
         way_humable_name, way_executable = dp.read(way_file)
-        sessions[way_humable_name] = WAYLAND_CMD_FMT.format(cmd = way_executable)
+        all_sessions[way_humable_name] = WAYLAND_CMD_FMT.format(cmd = way_executable)
 
-    sessions_available = OrderedDict(sorted(sessions.items(), key=lambda k: str.casefold(k[0])))
+    sessions_entries = OrderedDict(sorted(all_sessions.items(), key=lambda k: str.casefold(k[0])))
+    sessions_names = list(sessions_entries.keys())
 
-    menu = DialogMenu("FSDM", "Select the desktop:", 60, 10)
-    sessions = list(sessions_available.keys())
-    index_result = menu.ask(sessions)
-    cmd_result = sessions_available[sessions[index_result]]
+    try:
+        menu = DialogMenu("FSDM", "Select the desktop:", 60, 10)
+        index_result = menu.ask(sessions_names)
+    except FileNotFoundError:
+        menu = TextDialog("FSDM", "Select the desktop:")
+        index_result = menu.ask(sessions_names)
 
+    cmd_result = sessions_entries[sessions_names[index_result]]
     print(cmd_result, flush=True) # stdout
