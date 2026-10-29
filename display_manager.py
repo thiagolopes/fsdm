@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 This script generate a output to execute a Desktop Environment (DE) - with Xorg and Wayland Support.
 
