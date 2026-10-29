@@ -32,7 +32,7 @@ import tempfile
 from collections import OrderedDict
 
 X11_PATH = "/usr/share/xsessions"
-XORG_CMD_FMT = "XDG_SESSION_TYPE=x11 startx {cmd} -- @Xdisplay@ -nolisten tcp"
+XORG_CMD_FMT = "XDG_SESSION_TYPE=x11 startx {cmd} -- -nolisten tcp"
 
 WAYLAND_PATH = "/usr/share/wayland-sessions"
 WAYLAND_CMD_FMT = "XDG_SESSION_TYPE=wayland {cmd}"
