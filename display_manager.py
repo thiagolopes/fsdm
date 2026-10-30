@@ -76,16 +76,26 @@ class TextMenu:
         self.title = title
         self.header = header
 
+    def print(self, msg, new_line=True):
+        sys.stderr.write(msg)
+        if new_line:
+            sys.stderr.write("\n")
+        sys.stderr.flush()
+
+    def input(self, msg):
+        self.print(msg, False)
+        return input()
+
     def ask(self, options):
         s = 36
-        print("-" * s)
-        print(self.title)
-        print("-" * s)
+        self.print("-" * s)
+        self.print(self.title)
+        self.print("-" * s)
         for i, option in enumerate(options):
-            print(BOLDIT.format(i), "\t", option)
-        print("-" * s)
+            self.print(BOLDIT.format(i) + "\t" + option)
+        self.print("-" * s)
         while True:
-            choice = input(BOLDIT.format("Choice: "))
+            choice = self.input(BOLDIT.format("Choice: "))
             try:
                 # validate if choice is int, if not will raise ValueError
                 choice = int(choice)
@@ -93,9 +103,9 @@ class TextMenu:
                 options[choice]
                 break
             except ValueError:
-                print("Only numbers")
+                self.print("Only numbers")
             except IndexError:
-                print(f"{choice} is not valid option, only 0 - {len(options) - 1}")
+                self.print(f"{choice} is not valid option, only 0 - {len(options) - 1}")
         return choice
 
 
@@ -135,14 +145,14 @@ if __name__ == "__main__":
     fallback = False
     if args.dialog:
         try:
-            menu = DialogMenu(*program_prompt, 60, 10)
-            index_result = menu.ask(sessions_names)
+            dialog_menu = DialogMenu(*program_prompt, 60, 10)
+            index_result = dialog_menu.ask(sessions_names)
         except FileNotFoundError:
             print("[{}] dialog not found.".format(BOLDIT.format("error")))
             fallback = True
     if fallback or not args.dialog:
-        menu = TextMenu(*program_prompt)
-        index_result = menu.ask(sessions_names)
+        text_menu = TextMenu(*program_prompt)
+        index_result = text_menu.ask(sessions_names)
 
     cmd_result = sessions_entries[sessions_names[index_result]]
     print(cmd_result, flush=True)  # stdout
