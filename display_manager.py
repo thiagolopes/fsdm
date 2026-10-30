@@ -23,6 +23,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
+import argparse
 import configparser
 import os
 import shutil
@@ -67,6 +68,9 @@ class DialogMenu:
         return resp
 
 
+BOLDIT = "\033[1m{}\033[0m"
+
+
 class TextMenu:
     def __init__(self, title, header):
         self.title = title
@@ -74,15 +78,14 @@ class TextMenu:
 
     def ask(self, options):
         s = 36
-        b = "\033[1m{}\033[0m"
         print("-" * s)
         print(self.title)
         print("-" * s)
         for i, option in enumerate(options):
-            print(b.format(i), "\t", option)
+            print(BOLDIT.format(i), "\t", option)
         print("-" * s)
         while True:
-            choice = input(b.format("Choice: "))
+            choice = input(BOLDIT.format("Choice: "))
             try:
                 # validate if choice is int, if not will raise ValueError
                 choice = int(choice)
@@ -123,11 +126,22 @@ if __name__ == "__main__":
     sessions_entries = OrderedDict(sorted(all_sessions.items(), key=lambda k: str.casefold(k[0])))
     sessions_names = list(sessions_entries.keys())
 
-    try:
-        menu = DialogMenu("FSDM", "Select the desktop:", 60, 10)
-        index_result = menu.ask(sessions_names)
-    except FileNotFoundError:
-        menu = TextMenu("FSDM", "Select the desktop:")
+    arg_parse = argparse.ArgumentParser()
+    arg_parse.add_argument("--dialog", action="store_true")
+    args = arg_parse.parse_args()
+
+    program_prompt = ("FSDM", "Select the desktop:")
+
+    fallback = False
+    if args.dialog:
+        try:
+            menu = DialogMenu(*program_prompt, 60, 10)
+            index_result = menu.ask(sessions_names)
+        except FileNotFoundError:
+            print("[{}] dialog not found.".format(BOLDIT.format("error")))
+            fallback = True
+    if fallback or not args.dialog:
+        menu = TextMenu(*program_prompt)
         index_result = menu.ask(sessions_names)
 
     cmd_result = sessions_entries[sessions_names[index_result]]

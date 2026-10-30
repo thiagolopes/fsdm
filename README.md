@@ -1,11 +1,13 @@
-# A simple display manager
+# Thiago's simple desktop launcher
 ![image](https://github.com/thiagolopes/dialog_xsessions/assets/5994972/e95da4a2-ee9d-4351-86e9-1360cb2344b3)
 
 ## About
-This script does not currently function as a complete display manager, use logind to manager login(PAM). Its purpose is to generate an available display manager command to run.
+Start any desktop environment installed in the system. X11 and Wayland.
+
+This script is not a complete display manager like GDM. Use logind to manage login (PAM).
 
 ## Run
-You can use in your `.bashrc`|`.zshrc` to run when log to TTY1
+You can use in `.bashrc`|`.zshrc` to run when logging to TTY1
 ```sh
 if [[ -z "$DISPLAY" ]] && [[ $(tty) = /dev/tty1 ]]; then
     DP_PATH="$(python ~/.display_manager.py)"
