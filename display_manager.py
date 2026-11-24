@@ -118,10 +118,15 @@ class DesktopParser:
         executable_name = self.cp["Desktop Entry"]["Exec"]
         return humable_name, shutil.which(executable_name) or executable_name
 
+def list_dir(path):
+    try:
+        return os.listdir(path)
+    except FileNotFoundError:
+        return []
 
 if __name__ == "__main__":
-    x11_sessions_files = [f"{X11_PATH}/{f}" for f in os.listdir(X11_PATH)]
-    wayland_files = [f"{WAYLAND_PATH}/{f}" for f in os.listdir(WAYLAND_PATH)]
+    x11_sessions_files = [f"{X11_PATH}/{f}" for f in list_dir(X11_PATH)]
+    wayland_files = [f"{WAYLAND_PATH}/{f}" for f in list_dir(WAYLAND_PATH)]
     # TODO exit is no desktop found
 
     all_sessions = {}
